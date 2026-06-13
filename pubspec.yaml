@@ -1,0 +1,49 @@
+name: silent_aid
+description: Скрытая тревожная кнопка для жертв домашнего насилия
+version: 1.0.0+1
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # UI
+  cupertino_icons: ^1.0.6
+  google_fonts: ^6.1.0
+  provider: ^6.1.1
+  
+  # Storage
+  shared_preferences: ^2.2.2
+  flutter_secure_storage: ^9.0.0
+  
+  # Location
+  geolocator: ^10.1.0
+  
+  # Permissions
+  permission_handler: ^11.0.1
+  
+  # System
+  vibration: ^1.8.4
+  url_launcher: ^6.2.1
+  
+  # Audio recording
+  flutter_sound: ^9.2.13
+  path_provider: ^2.1.1
+  
+  # Widget
+  home_widget: ^0.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/images/
+    - assets/icons/
