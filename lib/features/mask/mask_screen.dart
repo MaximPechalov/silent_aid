@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:vibration/vibration.dart';
+import 'package:vibration_plus/vibration_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../emergency/emergency_screen.dart';
 import '../settings/settings_screen.dart';
@@ -120,9 +120,9 @@ class _MaskScreenState extends State<MaskScreen> {
   }
   
   void _activateEmergency() async {
-    if (await Vibration.hasVibrator() ?? false) {
-      Vibration.vibrate(duration: 100);
-    }
+    try {
+      await VibrationPlus.vibrate(duration: 100);
+    } catch (_) {}
     
     if (mounted) {
       Navigator.pushReplacement(
@@ -219,7 +219,6 @@ class _MaskScreenState extends State<MaskScreen> {
     final bool isPressed = _buttonPressed[key] ?? false;
     final Color currentColor = isPressed ? pressedColor : baseColor;
     
-    // Кнопка % — долгое нажатие открывает настройки
     if (key == '%') {
       return Expanded(
         child: Padding(
@@ -264,7 +263,6 @@ class _MaskScreenState extends State<MaskScreen> {
       );
     }
     
-    // Обычная кнопка
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.all(4.0),
