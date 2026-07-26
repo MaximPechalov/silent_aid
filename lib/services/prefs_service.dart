@@ -15,7 +15,7 @@ class PrefsService {
   static const String _keySosMessage = 'sos_message';
   static const String _keyCountdownSeconds = 'countdown_seconds';
   static const String _keyContacts = 'trust_contacts';
-  static const String _keyPin = 'settings_pin';
+  static const String _keySettingsPin = 'settings_pin';
   
   // Первый запуск
   bool isFirstLaunch() {
@@ -27,13 +27,15 @@ class PrefsService {
     return false;
   }
   
-  // Секретный код
+  // Секретный код (строго 3 цифры)
   String getSecretCode() {
     return _prefs.getString(_keySecretCode) ?? '112';
   }
   
   Future<void> setSecretCode(String code) async {
-    await _prefs.setString(_keySecretCode, code);
+    if (code.length == 3 && RegExp(r'^\d{3}$').hasMatch(code)) {
+      await _prefs.setString(_keySecretCode, code);
+    }
   }
   
   // Текст SOS
@@ -57,11 +59,13 @@ class PrefsService {
   
   // PIN настроек
   String getSettingsPin() {
-    return _prefs.getString(_keyPin) ?? '1234';
+    return _prefs.getString(_keySettingsPin) ?? '1234';
   }
   
   Future<void> setSettingsPin(String pin) async {
-    await _prefs.setString(_keyPin, pin);
+    if (pin.length == 4 && RegExp(r'^\d{4}$').hasMatch(pin)) {
+      await _prefs.setString(_keySettingsPin, pin);
+    }
   }
   
   // Контакты (шифрованное хранение)

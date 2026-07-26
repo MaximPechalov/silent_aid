@@ -14,6 +14,8 @@ class EmergencyViewmodel extends ChangeNotifier {
   int countdown = 10;
   List<TrustContact> trustContacts = [];
   bool isEmergencyActive = false;
+  bool isSending = false;
+  String statusMessage = '';
   
   EmergencyViewmodel({required this.prefsService}) {
     loadContacts();
@@ -26,6 +28,9 @@ class EmergencyViewmodel extends ChangeNotifier {
   
   void startEmergency() {
     isEmergencyActive = true;
+    statusMessage = 'Подготовка...';
+    countdown = 10;
+    notifyListeners();
     _startCountdown();
   }
   
@@ -33,10 +38,12 @@ class EmergencyViewmodel extends ChangeNotifier {
     Future.delayed(const Duration(seconds: 1), () {
       if (countdown > 1 && isEmergencyActive) {
         countdown--;
+        statusMessage = 'Отправка через $countdown сек';
         notifyListeners();
         _startCountdown();
       } else if (countdown == 1 && isEmergencyActive) {
         countdown--;
+        statusMessage = 'Отправка...';
         notifyListeners();
         _sendHelp();
       }
@@ -44,23 +51,65 @@ class EmergencyViewmodel extends ChangeNotifier {
   }
   
   Future<void> _sendHelp() async {
+    isSending = true;
+    statusMessage = 'Получение геолокации...';
+    notifyListeners();
+
+    // Получаем геолокацию
     final Position? position = await _locationService.getCurrentLocation();
-    final String location = position != null
-        ? _locationService.formatLocation(position)
-        : 'не определены';
     
-    final String message = prefsService.getSosMessage().replaceAll('{location}', location);
-    
-    for (var contact in trustContacts) {
-      await _smsService.sendSms(contact.phoneNumber, message);
+    String locationText;
+    if (position != null) {
+      locationText = _locationService.formatLocationWithAddress(position);
+    } else {
+      locationText = '⚠️ Геолокация не определена. Проверьте доступ к геолокации.';
     }
+
+    // Формируем сообщение
+    String baseMessage = prefsService.getSosMessage();
+    String fullMessage = baseMessage.replaceAll('{location}', locationText);
     
+    // Добавляем время
+    final String time = DateTime.now().toString().substring(0, 19);
+    fullMessage += '\n\n🕐 Время: $time';
+
+    statusMessage = 'Открытие SMS...';
+    notifyListeners();
+
+    // Отправляем SMS всем контактам
+    if (trustContacts.isEmpty) {
+      statusMessage = '❌ Нет доверенных контактов!';
+      isSending = false;
+      isEmergencyActive = false;
+      notifyListeners();
+      return;
+    }
+
+    final List<String> phoneNumbers = trustContacts.map((c) => c.phoneNumber).toList();
+    
+    // Отправляем первому контакту (для теста)
+    if (phoneNumbers.isNotEmpty) {
+      final bool success = await _smsService.sendSms(
+        phoneNumbers.first,
+        fullMessage,
+      );
+      
+      if (success) {
+        statusMessage = '✅ SMS открыто для отправки';
+      } else {
+        statusMessage = '❌ Ошибка открытия SMS';
+      }
+    }
+
+    isSending = false;
     isEmergencyActive = false;
     notifyListeners();
   }
   
   void cancelEmergency(BuildContext context) {
     isEmergencyActive = false;
+    countdown = 10;
+    statusMessage = '';
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (_) => const MaskScreen()),

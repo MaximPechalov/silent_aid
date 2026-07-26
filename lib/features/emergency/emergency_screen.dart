@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'emergency_viewmodel.dart';
+import 'emergency_sent_screen.dart';
 import '../../app/app_colors.dart';
+import '../mask/mask_screen.dart';
 
 class EmergencyScreen extends StatefulWidget {
   const EmergencyScreen({super.key});
@@ -26,6 +28,16 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
       body: SafeArea(
         child: Consumer<EmergencyViewmodel>(
           builder: (context, viewModel, child) {
+            // Если тревога не активна и таймер закончился — переходим на экран отправки
+            if (!viewModel.isEmergencyActive && viewModel.countdown <= 0) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const EmergencySentScreen()),
+                );
+              });
+            }
+
             return Padding(
               padding: const EdgeInsets.all(24.0),
               child: Column(

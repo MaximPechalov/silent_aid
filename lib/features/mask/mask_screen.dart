@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:vibration/vibration.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../emergency/emergency_screen.dart';
-import '../../app/app_colors.dart';
+import '../settings/settings_screen.dart';
+import '../../services/prefs_service.dart';
 
 class MaskScreen extends StatefulWidget {
   const MaskScreen({super.key});
@@ -16,10 +18,31 @@ class _MaskScreenState extends State<MaskScreen> {
   String _operator = '';
   bool _isNewNumber = true;
   String _codeBuffer = '';
+  String _secretCode = '112';
+  bool _isLoaded = false;
   
-  static const String _secretCode = '112';
+  final Map<String, bool> _buttonPressed = {};
+  
+  @override
+  void initState() {
+    super.initState();
+    _loadSecretCode();
+  }
+  
+  Future<void> _loadSecretCode() async {
+    final prefs = await SharedPreferences.getInstance();
+    final prefsService = PrefsService(prefs);
+    setState(() {
+      _secretCode = prefsService.getSecretCode();
+      _isLoaded = true;
+    });
+  }
   
   void _onKeyPressed(String key) {
+    setState(() {
+      _buttonPressed[key] = true;
+    });
+    
     setState(() {
       if (key == 'C') {
         _display = '0';
@@ -48,6 +71,14 @@ class _MaskScreenState extends State<MaskScreen> {
         if (_codeBuffer.length > _secretCode.length) {
           _codeBuffer = _codeBuffer.substring(1);
         }
+      }
+    });
+    
+    Future.delayed(const Duration(milliseconds: 150), () {
+      if (mounted) {
+        setState(() {
+          _buttonPressed[key] = false;
+        });
       }
     });
   }
@@ -101,12 +132,30 @@ class _MaskScreenState extends State<MaskScreen> {
     }
   }
   
+  void _openSettings() {
+    debugPrint('=== ОТКРЫТИЕ НАСТРОЕК (долгое нажатие на %) ===');
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const SettingsScreen()),
+    );
+  }
+  
   @override
   Widget build(BuildContext context) {
+    if (!_isLoaded) {
+      return const Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: CircularProgressIndicator(color: Colors.white),
+        ),
+      );
+    }
+    
     return Scaffold(
-      backgroundColor: AppColors.calculatorBackground,
+      backgroundColor: Colors.black,
       body: Column(
         children: [
+          // Дисплей
           Expanded(
             flex: 2,
             child: Container(
@@ -116,12 +165,13 @@ class _MaskScreenState extends State<MaskScreen> {
                 _display,
                 style: const TextStyle(
                   fontSize: 64,
-                  color: AppColors.calculatorDisplay,
+                  color: Colors.white,
                   fontWeight: FontWeight.w300,
                 ),
               ),
             ),
           ),
+          // Кнопки
           Expanded(
             flex: 4,
             child: Column(
@@ -148,34 +198,109 @@ class _MaskScreenState extends State<MaskScreen> {
   }
   
   Widget _buildButton(String key) {
-    Color backgroundColor;
+    Color baseColor;
+    Color pressedColor;
     Color textColor;
     
     if (key == 'C' || key == '±' || key == '%') {
-      backgroundColor = AppColors.calculatorSpecial;
+      baseColor = const Color(0xFFD4D4D2);
+      pressedColor = const Color(0xFFA8A8A6);
       textColor = Colors.black;
     } else if (key == '÷' || key == '×' || key == '-' || key == '+' || key == '=') {
-      backgroundColor = AppColors.calculatorOperator;
+      baseColor = const Color(0xFFFF9500);
+      pressedColor = const Color(0xFFCC7700);
       textColor = Colors.white;
     } else {
-      backgroundColor = AppColors.calculatorNumber;
+      baseColor = const Color(0xFF505050);
+      pressedColor = const Color(0xFF707070);
       textColor = Colors.white;
     }
     
+    final bool isPressed = _buttonPressed[key] ?? false;
+    final Color currentColor = isPressed ? pressedColor : baseColor;
+    
+    // Кнопка % — долгое нажатие открывает настройки
+    if (key == '%') {
+      return Expanded(
+        child: Padding(
+          padding: const EdgeInsets.all(4.0),
+          child: GestureDetector(
+            onLongPress: _openSettings,
+            onTapDown: (_) {
+              setState(() {
+                _buttonPressed[key] = true;
+              });
+            },
+            onTapUp: (_) {
+              setState(() {
+                _buttonPressed[key] = false;
+              });
+              _onKeyPressed(key);
+            },
+            onTapCancel: () {
+              setState(() {
+                _buttonPressed[key] = false;
+              });
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 100),
+              decoration: BoxDecoration(
+                color: currentColor,
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Text(
+                  key,
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w500,
+                    color: textColor,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+    
+    // Обычная кнопка
     return Expanded(
       child: Padding(
-        padding: const EdgeInsets.all(4),
-        child: ElevatedButton(
-          onPressed: () => _onKeyPressed(key),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: backgroundColor,
-            foregroundColor: textColor,
-            shape: const CircleBorder(),
-            padding: const EdgeInsets.all(20),
-          ),
-          child: Text(
-            key,
-            style: const TextStyle(fontSize: 24),
+        padding: const EdgeInsets.all(4.0),
+        child: GestureDetector(
+          onTapDown: (_) {
+            setState(() {
+              _buttonPressed[key] = true;
+            });
+          },
+          onTapUp: (_) {
+            setState(() {
+              _buttonPressed[key] = false;
+            });
+            _onKeyPressed(key);
+          },
+          onTapCancel: () {
+            setState(() {
+              _buttonPressed[key] = false;
+            });
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 100),
+            decoration: BoxDecoration(
+              color: currentColor,
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                key,
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w500,
+                  color: textColor,
+                ),
+              ),
+            ),
           ),
         ),
       ),

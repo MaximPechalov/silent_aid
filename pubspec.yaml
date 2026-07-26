@@ -28,13 +28,6 @@ dependencies:
   # System
   vibration: ^1.8.4
   url_launcher: ^6.2.1
-  
-  # Audio recording
-  flutter_sound: ^9.2.13
-  path_provider: ^2.1.1
-  
-  # Widget
-  home_widget: ^0.3.0
 
 dev_dependencies:
   flutter_test:
@@ -43,7 +36,3 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  
-  assets:
-    - assets/images/
-    - assets/icons/

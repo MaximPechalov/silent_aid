@@ -45,7 +45,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'SilentAid',
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
+        theme: AppTheme.darkTheme,
         home: onboardingCompleted
             ? const MaskScreen()
             : const OnboardingScreen(),
