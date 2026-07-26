@@ -5,6 +5,7 @@ plugins {
 }
 
 android {
+    namespace 'com.silentaid.silent_aid'
     compileSdk 34
     ndkVersion flutter.ndkVersion
 
