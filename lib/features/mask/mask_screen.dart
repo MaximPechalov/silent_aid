@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:vibration_plus/vibration_plus.dart';
+import 'package:vibration/vibration.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../emergency/emergency_screen.dart';
 import '../settings/settings_screen.dart';
@@ -121,7 +121,10 @@ class _MaskScreenState extends State<MaskScreen> {
   
   void _activateEmergency() async {
     try {
-      await VibrationPlus.vibrate(duration: 100);
+      final bool? hasVibrator = await Vibration.hasVibrator();
+      if (hasVibrator == true) {
+        await Vibration.vibrate(duration: 100);
+      }
     } catch (_) {}
     
     if (mounted) {
@@ -155,7 +158,6 @@ class _MaskScreenState extends State<MaskScreen> {
       backgroundColor: Colors.black,
       body: Column(
         children: [
-          // Дисплей
           Expanded(
             flex: 2,
             child: Container(
@@ -171,7 +173,6 @@ class _MaskScreenState extends State<MaskScreen> {
               ),
             ),
           ),
-          // Кнопки
           Expanded(
             flex: 4,
             child: Column(
